@@ -1,38 +1,76 @@
-#' Brute_force_Knapsack Function
+RNGversion(min(as.character(getRversion()),"3.5.3"))
+
+## suppressWarnings() can be used so that the above warning is not displayed
+set.seed(42, kind = "Mersenne-Twister", normal.kind = "Inversion")
+n <- 2000
+knapsack_objects <- data.frame(
+  w=sample(1:4000, size = n, replace = TRUE),
+  v=runif(n = n, 0, 10000)
+)
+
+library(parallel)
+#' Title
 #'
-#' @param x Data frame with two columns
-#' @param W knapsack size capacity
+#' @param x
+#' @param W
+#' @param parallel
 #'
-#' @return Return best Knapsack combination with maximum value
+#' @return
 #' @export
 #'
 #' @examples
-#' set.seed(42, kind = "Mersenne-Twister", normal.kind = "Inversion")
-#'set.seed(42)
-#'n <- 2000
-#'knapsack_objects <- data.frame(
-#'  w=sample(1:4000, size = n, replace = TRUE),
-#'  v=runif(n = n, 0, 10000))
-#'  brute_force_knapsack(x = knapsack_objects[1:8,], W = 3500)
-#'
-brute_force_knapsack= function(x,W){
-  stopifnot(is.data.frame(x), apply(x, c(1,2), is.numeric), is.numeric(W), W>=0)
-  n=length(x[,1])
-  w<-x[,1]
-  v<-x[,2]
-  result_elements=c()
-  result_value=0
-  range=1:2^(n)-1
-  for(j in range){
-    element=which(intToBits(j)==01)
-    total_weights=sum(w[element])
-    total_value=sum(v[element])
-    if(total_value > result_value && total_weights <= W){
-      result_elements=element
-      result_value=total_value
+brute_force_knapsack <- function(x, W, parallel = FALSE) {
+  if(class(x) != "data.frame") stop ()
+  if(all(colnames(x) != c("w", "v"))) stop()
+  if(class(W) != "numeric") stop()
+  if(W <= 0) stop()
+
+  res <- list()
+  res[["value"]] <- 0
+
+  if(parallel == TRUE) {
+    cores <- detectCores()
+    cl <- makeCluster(cores, type = "PSOCK")
+    clusterExport(cl, c("x", "W", "res"), envir = environment())
+
+    binrep <- parSapply(cl, (1:(2^nrow(x)-1)), function(i) {
+      sum(x[which(intToBits(i) == 1), 1])
+    })
+
+    binrep_sums <- parSapply(cl, (1:(2^nrow(x)-1))[which(binrep <= W)], function(i) {
+      sum(x[which(intToBits(i) == 1), 2])
+    })
+
+    res[["value"]] <- round(max(binrep_sums))
+    res[["elements"]] <- which(intToBits((1:(2^nrow(x)-1))[which(binrep <= W)][which.max(binrep_sums)]) == 1)
+
+    stopCluster(cl)
+  }
+
+  else {
+    for(i in 1:(2^nrow(x)-1)) {
+      if( sum(x[which(intToBits(i) == 1), 1]) <= W & sum(x[which(intToBits(i) == 1), 2]) > res[["value"]] ) {
+        res[["value"]] <- round(sum(x[which(intToBits(i) == 1), 2]))
+        res[["elements"]] <- which(intToBits(i) == 1)
+      }
     }
   }
-  result=list("elements"=result_elements,"value"=(result_value))
-  return (result)
+
+  return(res)
 }
 
+brute_force_knapsack(x = knapsack_objects[1:16,], W = 3500)
+brute_force_knapsack(x = knapsack_objects[1:16,], W = 3500, parallel = TRUE)
+
+brute_force_knapsack(x = knapsack_objects[1:8,], W = 3500)
+brute_force_knapsack(x = knapsack_objects[1:8,], W = 3500, parallel = TRUE)
+# 16770
+brute_force_knapsack(x = knapsack_objects[1:12,], W = 3500)
+brute_force_knapsack(x = knapsack_objects[1:12,], W = 3500, parallel = TRUE)
+# 16770
+brute_force_knapsack(x = knapsack_objects[1:8,], W = 2000)
+brute_force_knapsack(x = knapsack_objects[1:8,], W = 2000, parallel = TRUE)
+# 15428
+brute_force_knapsack(x = knapsack_objects[1:12,], W = 2000)
+brute_force_knapsack(x = knapsack_objects[1:12,], W = 2000, parallel = TRUE)
+# 15428
