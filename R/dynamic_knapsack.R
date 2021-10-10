@@ -54,16 +54,3 @@ dynamic_knapsack <- function(x, W) {
   #return(round(m[nrow(m),ncol(m)]))
   return(res)
 }
-
-#dynamic_knapsack(x = knapsack_objects[1:16,], W = 3500)
-#dynamic_knapsack(x = data.frame(w = c(10,20,30), v = c(60,100,120)), W = 50)
-
-dynamic_knapsack(x = knapsack_objects[1:8,], W = 3500)
-# 16770
-dynamic_knapsack(x = knapsack_objects[1:12,], W = 3500)
-# 16770
-dynamic_knapsack(x = knapsack_objects[1:8,], W = 2000)
-# 15428
-dynamic_knapsack(x = knapsack_objects[1:12,], W = 2000)
-# 15428
-
