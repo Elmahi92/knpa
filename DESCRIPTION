@@ -12,6 +12,8 @@ LazyData: true
 RoxygenNote: 7.1.2
 Depends: parallel
 VignetteBuilder: knitr
+URL: https://github.com/Elmahi92/knpa
+BugReports: https://github.com/Elmahi92/knpa/issues
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
