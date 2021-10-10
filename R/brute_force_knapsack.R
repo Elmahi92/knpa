@@ -1,3 +1,6 @@
+library(parallel)
+
+
 #' Title Brute Force-Knapsack
 #' @param x data frame consist of two columns w and v
 #' @param W total capacity
@@ -15,7 +18,6 @@
 #'  v=runif(n = n, 0, 10000))
 #'  brute_force_knapsack(x = knapsack_objects[1:8,], W = 3500)
 
-library(parallel)
 brute_force_knapsack <- function(x, W, parallel = FALSE) {
   if(class(x) != "data.frame") stop ()
   if(all(colnames(x) != c("w", "v"))) stop()
