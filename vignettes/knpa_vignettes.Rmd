@@ -1,6 +1,6 @@
 ---
-title: "Vignette Title"
-author: "Vignette Author"
+title: "knpa"
+author: "Mohammed Ali & Simon Alsén"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -16,50 +16,55 @@ knitr::opts_chunk$set(
 )
 ```
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+This package implements three different algorithms for solving the knapsack problem.
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+## Load the package and generate sample data
+Start by loading the package and generate some sample data.
 
-## Vignette Info
+```{r initialize}
+library(knpa)
 
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+RNGversion(min(as.character(getRversion()),"3.5.3"))
+set.seed(42, kind = "Mersenne-Twister", normal.kind = "Inversion")
+n <- 2000
+knapsack_objects <- data.frame(
+  w=sample(1:4000, size = n, replace = TRUE),
+  v=runif(n = n, 0, 10000)
+  )
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+## brute_force_knapsack()
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+brute_force_knapsack() finds and calculates the total value of all possible subsets whose weight is less or equal to the knapsack’s maximum capacity, and then returns the subset with the largest value. The algorithm returns the best, possible solution but can be very time-consuming when handling large data sets.
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+```{r brute_force_knapsack}
+brute_force_knapsack(x = knapsack_objects[1:8,], W = 3500)
 ```
 
-Also a quote using `>`:
+The algorithm takes about 5 seconds to run for n=16 objects.
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+If the argument parallel is set to TRUE, the brute_force_knapsack()-function will parallize over the detected cores.
+
+```{r brute_force_knapsack_parallel}
+brute_force_knapsack(x = knapsack_objects[1:16,], W = 3500, parallel = TRUE)
+```
+
+By using parallel=TRUE, the algorithm takes about 2.5 seconds to run for n=16 objects.
+
+## dynamic_knapsack()
+dynamic_knapsack() finds the best, possible solution to the knapsack problem. This algorithm is more time-efficient than the brute_force_knapsack()-method.
+
+```{r dynamic_knapsack}
+dynamic_knapsack(x = knapsack_objects[1:8,], W = 3500)
+```
+
+The algorithm takes about 95 seconds to run for n=500 objects.
+
+## greedy_knapsack()
+greedy_knapsack() returns an approximation for the knapsack problem. However, the algorithms do not always return the best, possible solution to the problem.
+
+```{r greedy_knapsack}
+greedy_knapsack(x = knapsack_objects[1:8,], W = 3500)
+```
+
+The algorithm takes about 2.5 seconds to run for n=1000000 objects.
