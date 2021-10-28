@@ -38,7 +38,7 @@ knapsack_objects <- data.frame(
 brute_force_knapsack() finds and calculates the total value of all possible subsets whose weight is less or equal to the knapsack’s maximum capacity, and then returns the subset with the largest value. The algorithm returns the best, possible solution but can be very time-consuming when handling large data sets.
 
 ```{r brute_force_knapsack}
-brute_force_knapsack(x = knapsack_objects[1:8,], W = 3500)
+brute_force_knapsack(x = knapsack_objects[1:16,], W = 3500)
 ```
 
 The algorithm takes about 5 seconds to run for n=16 objects.
@@ -54,8 +54,8 @@ By using parallel=TRUE, the algorithm takes about 2.5 seconds to run for n=16 ob
 ## dynamic_knapsack()
 dynamic_knapsack() finds the best, possible solution to the knapsack problem. This algorithm is more time-efficient than the brute_force_knapsack()-method.
 
-```{r dynamic_knapsack}
-dynamic_knapsack(x = knapsack_objects[1:8,], W = 3500)
+```{r dynamic_knapsack, eval=FALSE}
+dynamic_knapsack(x = knapsack_objects[1:500,], W = 3500)
 ```
 
 The algorithm takes about 95 seconds to run for n=500 objects.
@@ -68,3 +68,38 @@ greedy_knapsack(x = knapsack_objects[1:8,], W = 3500)
 ```
 
 The algorithm takes about 2.5 seconds to run for n=1000000 objects.
+
+## Profiling and optimizing the code
+
+By profiling the code with profvis, the following bottlenecks are found in the following rows:
+
+bute_force_knapsack():
+```{r profvis_1, eval=FALSE}
+if( sum(x[which(intToBits(i) == 1), 1]) <= W && sum(x[which(intToBits(i) == 1), 2]) > res[["value"]] )
+```
+
+dynamic_knapsack():
+```{r profvis_2, eval=FALSE}
+if(x[i,1] > j)
+```
+
+and:
+```{r profvis_3, eval=FALSE}
+m[i+1,j] <- max(m[i,j], m[i, j-x[i,1]] + x[i,2])
+```
+
+In the greedy_knapsack()-function no bottle necks are found.
+
+The brute_force_knapsack()-function can be optimized by changing the line:
+```{r profvis_4, eval=FALSE}
+if( sum(x[which(intToBits(i) == 1), 1]) <= W & sum(x[which(intToBits(i) == 1), 2]) > res[["value"]] )
+```
+
+to:
+```{r profvis_5, eval=FALSE}
+if( sum(x[which(intToBits(i) == 1), 1]) <= W && sum(x[which(intToBits(i) == 1), 2]) > res[["value"]] )
+```
+
+&& means that the if statement first checks if the first condition is TRUE or FALSE, and if it is not the second condition will not be checked which means that the number of calculations needed are reduced. This reduces the time with over 50%.
+
+By implementing parallelization in the brute_force_knapsack() the time is reduced by approximately 50%.
